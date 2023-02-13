@@ -9,7 +9,7 @@ export const prerender = true;
     import PieChart from '../chart/PieChart.svelte'
     import BarChart from '../chart/BarChart.svelte'
     import HorizBarChart from '../chart/HorizBarChart.svelte'
-
+import { assets, base } from '$app/paths';
     let data, dataMap, boxes = []
 
     class ColorSystem {
@@ -168,7 +168,7 @@ export const prerender = true;
     }
 
 	onMount(async () => {
-        const data_ = await csv("jtr-data-2022.csv");
+        const data_ = await csv(base + "/jtr-data-2022.csv");
         const dataMap_ = {}
         data_.columns.forEach((col, idx)=>{
             dataMap_[col] = []
@@ -208,7 +208,7 @@ export const prerender = true;
 
 <div class="content">
 
-<img class="logo" src="metso.png" alt="metso logo">
+<img class="logo" src="{base}/metso.png" alt="metso logo">
 <h1>Jyväskylä Trail Runners kysely</h1>
 <p>
 Jyväskylä Trail Runners facebook-ryhmässä pyydettiin ihmisiä
