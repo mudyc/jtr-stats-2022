@@ -11,7 +11,9 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			fallback: 'index.html'
+			fallback: 'index.html',
+			pages: 'docs',
+			assets: 'docs',
 		}),
 		paths: {
 			base: dev ? '': '/jtr-stats-2022/build'
