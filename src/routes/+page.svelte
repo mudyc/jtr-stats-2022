@@ -55,12 +55,20 @@ import { assets, base } from '$app/paths';
             this.color = null
             this.filters = []
             this.sort = undefined
+            this.groups = undefined
         }
         singleChoice(col) {
             return new Data(this.data, col, 'single')
         }
         multiChoice(col) {
             return new Data(this.data, col, 'multi')
+        }
+        groupChoice(grp) {
+            return new Data(this.data, grp, 'group')
+        }
+        grps(arr) {
+            this.groups = arr
+            return this
         }
         kpl(col) {
             return this.data[col].filter(v => v != '').length
@@ -78,7 +86,7 @@ import { assets, base } from '$app/paths';
         }
         filterRemove(removable) {
             this.filters.push((acc, value) => {
-                console.log(value)
+                //console.log(value)
                 if (this.choice == 'multi'){
                     acc.push(value.split(';').filter(v => v != removable).join(';'))
                 } else
@@ -135,33 +143,65 @@ import { assets, base } from '$app/paths';
                 }
             }
 
-            let d = this.data[this.col]
-            for (const filt of this.filters) d = d.reduce(filt, [])
-            if (this.calculate == 'count') {
-                if (this.choice == 'multi') {
-                    d = d.reduce((acc, val) => {
-                        for (const v of val.split(';')) acc.push(v)
-                        return acc
-                    }, [])
+            if (['single','multi'].includes(this.choice)) {
+                let d = this.data[this.col]
+                for (const filt of this.filters) d = d.reduce(filt, [])
+                if (this.calculate == 'count') {
+                    if (this.choice == 'multi') {
+                        d = d.reduce((acc, val) => {
+                            for (const v of val.split(';')) acc.push(v)
+                            return acc
+                        }, [])
+                    }
+                    const count = 
+                        order(d.reduce((acc, val) => {
+                            if (!acc[val]) acc[val] = 0
+                            acc[val]++
+                            return acc
+                        }, {}))
+    
+                    const labels = Object.keys(count)
+                    const data = Object.values(count)
+                    const n = labels.length
+                    return {
+                        labels,
+                        datasets: [{
+                            label: 'näytä',
+                            data,
+                            backgroundColor: this.color.colors(n),
+                            hoverBackgroundColor: this.color.colors(n)
+                        }]
+                    }
                 }
-                const count = 
-                    order(d.reduce((acc, val) => {
-                        if (!acc[val]) acc[val] = 0
-                        acc[val]++
-                        return acc
-                    }, {}))
+            }
+            if (this.choice == 'group') {
+                const labels = Object.keys(this.col)
+                const colors = this.color.colors(this.groups.length)
+                const datasets = []
+                for (const g of this.groups) {
+                    datasets.push({
+                        label: g,
+                        data: labels.map(grp => {
+                            let d = this.data[this.col[grp]]
+                            for (const filt of this.filters) d = d.reduce(filt, [])
 
-                const labels = Object.keys(count)
-                const data = Object.values(count)
-                const n = labels.length
+                            d = d.reduce((acc, val) => {
+                                for (const v of val.split(';')) acc.push(v)
+                                return acc
+                            }, [])
+                            const count = d.reduce((acc, val) => {
+                                if (!acc[val]) acc[val] = 0
+                                acc[val]++
+                                return acc
+                            }, {})
+                            return count[g]
+                        }),
+                        backgroundColor: colors[this.groups.indexOf(g)]
+                    })
+                }
                 return {
                     labels,
-                    datasets: [{
-                        label: 'näytä',
-                        data,
-                        backgroundColor: this.color.colors(n),
-                        hoverBackgroundColor: this.color.colors(n)
-                    }]
+                    datasets
                 }
             }
         }
@@ -468,19 +508,36 @@ vastasi liikkumistapaan treeneihin.
 />
 
 
-<h3>Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon]</h3>
-<!--
-Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon]
-{ data?.kpl('Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon]') } 
-vastasi liikkumistapaan treeneihin.
+<h3>Paras ajoitus treenille</h3>
+{ data?.kpl('Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Maanantai]') } 
+vastasi treenien parhaaseen ajoitukseen eri päivinä.
+
 <BarChart data={
-    data?.multiChoice('Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon]')
+    data?.groupChoice({
+        Maanantai: 'Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Maanantai]',
+        Tiistai: 'Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Tiistai]',
+        Keskiviikko: 'Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Keskiviikko]',
+        Torstai: 'Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Torstai]',
+        Perjantai: 'Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Perjantai]'
+    })
+    .grps('5-7,7-10,10-12,12-15,15-17,17-19,19-21,>21'.split(','))
     .filterEmpty()
     .count()
     .colorize(color.diverging())
     .out() }
 />
--->
+<BarChart data={
+    data?.groupChoice({
+        Lauantai: 'Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Lauantai]',
+        Sunnuntai: 'Paras ajoitus olisi (kellonaika) - [puhelin vaakatasoon] [Sunnuntai]'
+    })
+    .grps('5-7,7-10,10-12,12-15,15-17,17-19,19-21,>21'.split(','))
+    .filterEmpty()
+    .count()
+    .colorize(color.diverging())
+    .out() }
+/>
+
 
 <h3>Optimaalinen treeni</h3>
 { data?.kpl('Treenimääränä minusta olisi optimaalinen') } 
