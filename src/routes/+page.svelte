@@ -341,7 +341,7 @@ Ryhmäläiset edustavat varsin liikkuvaa sakkia 💪
     .colorize(color.diverging())
     .out() }
 />
-<img alt="cooper vertailutaulukko" src="cooper.png" >
+<img alt="cooper vertailutaulukko" src="{base}/cooper.png" >
 
 <h3>Treenitavat</h3>
 
